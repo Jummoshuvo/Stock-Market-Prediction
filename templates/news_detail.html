@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Stock News - {{ news_title }}</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body class="bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50 min-h-screen">
+    <!-- Navbar -->
+    <nav class="bg-white shadow-lg sticky top-0 z-50">
+        <div class="container mx-auto px-4">
+            <div class="flex justify-between items-center py-4">
+                <div class="flex items-center space-x-2">
+                    <i class="fas fa-chart-line text-indigo-600 text-2xl"></i>
+                    <a href="/" class="text-xl font-bold text-gray-800">StockPredictor</a>
+                    <span class="text-sm text-gray-500 ml-2">| Stock News</span>
+                </div>
+                <div class="flex items-center space-x-4">
+                    <a href="/" class="text-gray-700 hover:text-indigo-600 transition-colors">
+                        <i class="fas fa-home mr-2"></i>Home
+                    </a>
+                    <a href="/#stock-news" class="text-gray-700 hover:text-indigo-600 transition-colors">
+                        <i class="fas fa-newspaper mr-2"></i>All News
+                    </a>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- News Article -->
+    <div class="container mx-auto px-4 py-12 max-w-4xl">
+        <!-- Back Button -->
+        <a href="/#stock-news" class="inline-flex items-center text-indigo-600 hover:text-indigo-700 mb-6">
+            <i class="fas fa-arrow-left mr-2"></i>Back to News
+        </a>
+
+        <!-- Article Header -->
+        <div class="bg-white rounded-2xl shadow-xl p-8 mb-6">
+            <div class="flex items-center mb-4">
+                <div class="p-3 rounded-lg {{ news_icon_bg }} mr-4">
+                    <i class="{{ news_icon }} text-3xl {{ news_icon_color }}"></i>
+                </div>
+                <div>
+                    <span class="px-3 py-1 rounded-full text-sm font-semibold {{ news_category_bg }} {{ news_category_text }}">
+                        {{ news_category }}
+                    </span>
+                </div>
+            </div>
+            <h1 class="text-4xl font-bold text-gray-800 mb-4">{{ news_title }}</h1>
+            <div class="flex items-center text-gray-600 text-sm">
+                <i class="fas fa-calendar mr-2"></i>
+                <span>{{ news_date }}</span>
+                <span class="mx-2">•</span>
+                <i class="fas fa-user mr-2"></i>
+                <span>{{ news_author }}</span>
+                <span class="mx-2">•</span>
+                <i class="fas fa-clock mr-2"></i>
+                <span>{{ news_read_time }} min read</span>
+            </div>
+        </div>
+
+        <!-- Article Image -->
+        {% if news_image %}
+        <div class="bg-white rounded-2xl shadow-xl p-2 mb-6">
+            <img src="{{ news_image }}" alt="{{ news_title }}" class="w-full rounded-xl">
+        </div>
+        {% endif %}
+
+        <!-- Article Content -->
+        <div class="bg-white rounded-2xl shadow-xl p-8 mb-6">
+            <div class="prose max-w-none">
+                {{ news_content|safe }}
+            </div>
+        </div>
+
+        <!-- Related News -->
+        <div class="bg-white rounded-2xl shadow-xl p-8">
+            <h2 class="text-2xl font-bold text-gray-800 mb-6">
+                <i class="fas fa-newspaper text-indigo-600 mr-2"></i>Related News
+            </h2>
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                {% for related in related_news %}
+                <a href="/news/{{ related.slug }}/" class="block p-4 border-2 border-gray-200 rounded-lg hover:border-indigo-500 transition-colors">
+                    <h3 class="font-semibold text-gray-800 mb-2">{{ related.title }}</h3>
+                    <p class="text-sm text-gray-600">{{ related.excerpt }}</p>
+                </a>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+
+    <!-- Footer -->
+    <footer class="bg-gray-800 text-white py-8 mt-12">
+        <div class="container mx-auto px-4 text-center">
+            <p><i class="fas fa-info-circle mr-2"></i>Predictions are for educational purposes only. Not financial advice.</p>
+            <p class="mt-2">&copy; 2025 StockPredictor. All rights reserved.</p>
+        </div>
+    </footer>
+</body>
+</html>
+

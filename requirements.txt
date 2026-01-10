@@ -1,0 +1,10 @@
+Django>=4.2.0
+djangorestframework>=3.14.0
+django-cors-headers>=4.3.0
+bdshare>=0.1.1
+stocksurferbd>=0.1.0
+pandas>=2.1.0
+numpy>=1.26.0
+requests>=2.31.0
+python-dateutil>=2.8.0
+

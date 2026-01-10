@@ -1,0 +1,521 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Stock Market Prediction - Bangladeshi Stocks</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Google Sign In - Note: Replace YOUR_CLIENT_ID with your actual Google OAuth Client ID -->
+    <script src="https://accounts.google.com/gsi/client" async defer></script>
+    <script>
+        // Initialize Google Sign In when the page loads
+        window.onload = function() {
+            google.accounts.id.initialize({
+                client_id: "YOUR_GOOGLE_CLIENT_ID.apps.googleusercontent.com", // Replace with your actual Client ID
+                callback: handleCredentialResponse
+            });
+            
+            // Render the button (optional - we're using a custom button)
+            // google.accounts.id.renderButton(
+            //     document.getElementById("googleSignIn"),
+            //     { theme: "outline", size: "large" }
+            // );
+        };
+    </script>
+</head>
+<body class="bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50 min-h-screen">
+    <!-- Messages -->
+    {% if messages %}
+    <div class="fixed top-20 right-4 z-50 space-y-2">
+        {% for message in messages %}
+        <div class="bg-{% if message.tags == 'error' %}red{% elif message.tags == 'warning' %}yellow{% else %}green{% endif %}-500 text-white px-6 py-4 rounded-lg shadow-lg flex items-center max-w-md">
+            <i class="fas fa-{% if message.tags == 'error' %}exclamation-circle{% elif message.tags == 'warning' %}exclamation-triangle{% else %}check-circle{% endif %} mr-3"></i>
+            <span>{{ message }}</span>
+            <button onclick="this.parentElement.remove()" class="ml-4 text-white hover:text-gray-200">
+                <i class="fas fa-times"></i>
+            </button>
+        </div>
+        {% endfor %}
+    </div>
+    <script>
+        // Auto-hide messages after 5 seconds
+        setTimeout(function() {
+            document.querySelectorAll('.fixed.top-20').forEach(function(el) {
+                el.style.transition = 'opacity 0.5s';
+                el.style.opacity = '0';
+                setTimeout(function() { el.remove(); }, 500);
+            });
+        }, 5000);
+    </script>
+    {% endif %}
+
+    <!-- Navbar -->
+    <nav class="bg-white shadow-lg sticky top-0 z-50">
+        <div class="container mx-auto px-4">
+            <div class="flex justify-between items-center py-4">
+                <!-- Logo -->
+                <div class="flex items-center space-x-2">
+                    <i class="fas fa-chart-line text-indigo-600 text-2xl"></i>
+                    <span class="text-xl font-bold text-gray-800">StockPredictor</span>
+                </div>
+
+                <!-- Navigation Links -->
+                <div class="hidden md:flex items-center space-x-6">
+                    <a href="#home" class="text-gray-700 hover:text-indigo-600 transition-colors font-medium">Home</a>
+                    <a href="#stock-news" class="text-gray-700 hover:text-indigo-600 transition-colors font-medium">Stock News</a>
+                    <a href="#trade-platform" class="text-gray-700 hover:text-indigo-600 transition-colors font-medium">Trade Platform</a>
+                    <a href="#contact" class="text-gray-700 hover:text-indigo-600 transition-colors font-medium">Contact</a>
+                </div>
+
+                <!-- Login Buttons -->
+                <div class="flex items-center space-x-3">
+                    {% if user.is_authenticated %}
+                    <div class="flex items-center space-x-3">
+                        <span class="text-gray-700">
+                            <i class="fas fa-user mr-2"></i>{{ user.username }}
+                        </span>
+                        <a href="/logout/" class="px-4 py-2 text-red-600 border border-red-600 rounded-lg hover:bg-red-50 transition-colors font-medium">
+                            <i class="fas fa-sign-out-alt mr-2"></i>Logout
+                        </a>
+                    </div>
+                    {% else %}
+                    <a href="/login/" class="px-4 py-2 text-indigo-600 border border-indigo-600 rounded-lg hover:bg-indigo-50 transition-colors font-medium">
+                        <i class="fas fa-sign-in-alt mr-2"></i>Login
+                    </a>
+                    <a href="/signup/" class="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors font-medium">
+                        <i class="fas fa-user-plus mr-2"></i>Sign Up
+                    </a>
+                    {% endif %}
+                </div>
+
+                <!-- Mobile Menu Button -->
+                <button id="mobileMenuBtn" class="md:hidden text-gray-700">
+                    <i class="fas fa-bars text-2xl"></i>
+                </button>
+            </div>
+
+            <!-- Mobile Menu -->
+            <div id="mobileMenu" class="hidden md:hidden pb-4">
+                <a href="#home" class="block py-2 text-gray-700 hover:text-indigo-600">Home</a>
+                <a href="#stock-news" class="block py-2 text-gray-700 hover:text-indigo-600">Stock News</a>
+                <a href="#trade-platform" class="block py-2 text-gray-700 hover:text-indigo-600">Trade Platform</a>
+                <a href="#contact" class="block py-2 text-gray-700 hover:text-indigo-600">Contact</a>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Hero Section -->
+    <section id="home" class="bg-gradient-to-r from-indigo-600 via-purple-600 to-indigo-700 text-white py-20">
+        <div class="container mx-auto px-4 text-center">
+            <h1 class="text-5xl md:text-6xl font-bold mb-4">
+                <i class="fas fa-chart-line mr-3"></i>Bangladeshi Stock Market Predictor
+            </h1>
+            <p class="text-xl md:text-2xl mb-8 text-indigo-100">
+                Get AI-powered predictions for Bangladeshi stocks with advanced analytics
+            </p>
+            <div class="flex flex-col sm:flex-row gap-4 justify-center items-center">
+                <button onclick="document.getElementById('predictionSection').scrollIntoView({behavior: 'smooth'})" 
+                        class="bg-white text-indigo-600 px-8 py-3 rounded-lg font-semibold text-lg hover:bg-indigo-50 transition-all transform hover:scale-105 shadow-lg">
+                    <i class="fas fa-rocket mr-2"></i>Get Started
+                </button>
+                <button onclick="document.getElementById('stock-news').scrollIntoView({behavior: 'smooth'})" 
+                        class="bg-transparent border-2 border-white text-white px-8 py-3 rounded-lg font-semibold text-lg hover:bg-white hover:text-indigo-600 transition-all">
+                    <i class="fas fa-newspaper mr-2"></i>Latest News
+                </button>
+            </div>
+        </div>
+    </section>
+
+    <!-- Prediction Section -->
+    <section id="predictionSection" class="container mx-auto px-4 py-12 max-w-6xl">
+        <!-- Main Content -->
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            <!-- Input Section -->
+            <div class="lg:col-span-1">
+                <div class="bg-white rounded-2xl shadow-xl p-6 sticky top-24">
+                    <h2 class="text-2xl font-semibold text-gray-800 mb-4">
+                        <i class="fas fa-search text-indigo-600"></i> Search Stock
+                    </h2>
+                    
+                    <div class="mb-4">
+                        <label for="stockSymbol" class="block text-sm font-medium text-gray-700 mb-2">
+                            Stock Symbol
+                        </label>
+                        <div class="relative">
+                            <input 
+                                type="text" 
+                                id="stockSymbol" 
+                                placeholder="e.g., GP, SQUARE, BEXIMCO"
+                                class="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:border-indigo-500 focus:outline-none transition-colors text-lg uppercase"
+                                maxlength="10"
+                            >
+                            <i class="fas fa-tag absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400"></i>
+                        </div>
+                    </div>
+
+                    <button 
+                        id="predictBtn" 
+                        class="w-full bg-gradient-to-r from-indigo-600 to-purple-600 text-white py-3 rounded-lg font-semibold text-lg hover:from-indigo-700 hover:to-purple-700 transition-all transform hover:scale-105 shadow-lg mb-4"
+                    >
+                        <i class="fas fa-crystal-ball mr-2"></i> Get Prediction
+                    </button>
+
+                    <!-- Current Price Display -->
+                    <div id="currentPriceCard" class="hidden bg-gradient-to-r from-green-50 to-emerald-50 rounded-lg p-4 border-2 border-green-200">
+                        <div class="flex justify-between items-center">
+                            <div>
+                                <p class="text-sm text-gray-600">Current Price</p>
+                                <p id="currentPrice" class="text-2xl font-bold text-green-700">৳0.00</p>
+                            </div>
+                            <i class="fas fa-dollar-sign text-3xl text-green-500"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Results Section -->
+            <div class="lg:col-span-2 space-y-6">
+                <!-- Prediction Card -->
+                <div id="predictionCard" class="hidden bg-white rounded-2xl shadow-xl p-6">
+                    <h2 class="text-2xl font-semibold text-gray-800 mb-4">
+                        <i class="fas fa-chart-area text-indigo-600"></i> Prediction Results
+                    </h2>
+                    
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+                        <div class="bg-blue-50 rounded-lg p-4 border-2 border-blue-200">
+                            <p class="text-sm text-gray-600 mb-1">Tomorrow's Prediction</p>
+                            <p id="tomorrowPrice" class="text-2xl font-bold text-blue-700">৳0.00</p>
+                            <p id="tomorrowChange" class="text-sm mt-1"></p>
+                        </div>
+                        <div class="bg-purple-50 rounded-lg p-4 border-2 border-purple-200">
+                            <p class="text-sm text-gray-600 mb-1">Next Week</p>
+                            <p id="weekPrice" class="text-2xl font-bold text-purple-700">৳0.00</p>
+                            <p id="weekChange" class="text-sm mt-1"></p>
+                        </div>
+                        <div class="bg-indigo-50 rounded-lg p-4 border-2 border-indigo-200">
+                            <p class="text-sm text-gray-600 mb-1">Next Month</p>
+                            <p id="monthPrice" class="text-2xl font-bold text-indigo-700">৳0.00</p>
+                            <p id="monthChange" class="text-sm mt-1"></p>
+                        </div>
+                    </div>
+
+                    <!-- Prediction Confidence -->
+                    <div class="mb-6">
+                        <div class="flex justify-between items-center mb-2">
+                            <span class="text-sm font-medium text-gray-700">Prediction Confidence</span>
+                            <span id="confidence" class="text-sm font-bold text-indigo-600">0%</span>
+                        </div>
+                        <div class="w-full bg-gray-200 rounded-full h-3">
+                            <div id="confidenceBar" class="bg-gradient-to-r from-indigo-500 to-purple-500 h-3 rounded-full transition-all duration-500" style="width: 0%"></div>
+                        </div>
+                    </div>
+
+                    <!-- Recommendation -->
+                    <div id="recommendation" class="bg-gray-50 rounded-lg p-4 border-2 border-gray-200">
+                        <p class="text-sm font-semibold text-gray-700 mb-2">
+                            <i class="fas fa-lightbulb text-yellow-500"></i> Recommendation
+                        </p>
+                        <p id="recommendationText" class="text-gray-600"></p>
+                    </div>
+                </div>
+
+                <!-- Chart Section -->
+                <div id="chartCard" class="hidden bg-white rounded-2xl shadow-xl p-6">
+                    <h2 class="text-2xl font-semibold text-gray-800 mb-4">
+                        <i class="fas fa-chart-line text-indigo-600"></i> Price Trend
+                    </h2>
+                    <canvas id="priceChart"></canvas>
+                </div>
+
+                <!-- Loading State -->
+                <div id="loadingState" class="hidden bg-white rounded-2xl shadow-xl p-12 text-center">
+                    <div class="inline-block animate-spin rounded-full h-16 w-16 border-t-4 border-b-4 border-indigo-600 mb-4"></div>
+                    <p class="text-gray-600 text-lg">Analyzing market data...</p>
+                </div>
+
+                <!-- Welcome Message -->
+                <div id="welcomeMessage" class="bg-white rounded-2xl shadow-xl p-12 text-center">
+                    <i class="fas fa-chart-bar text-6xl text-indigo-300 mb-4"></i>
+                    <h3 class="text-2xl font-semibold text-gray-800 mb-2">Welcome to Stock Predictor</h3>
+                    <p class="text-gray-600">Enter a stock symbol above to get started with predictions</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Stock News Section -->
+    <section id="stock-news" class="bg-white py-16">
+        <div class="container mx-auto px-4">
+            <h2 class="text-4xl font-bold text-center text-gray-800 mb-12">
+                <i class="fas fa-newspaper text-indigo-600 mr-3"></i>Stock News
+            </h2>
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <div class="bg-gradient-to-br from-blue-50 to-indigo-50 rounded-xl p-6 shadow-lg">
+                    <div class="flex items-center mb-4">
+                        <i class="fas fa-chart-line text-3xl text-indigo-600 mr-3"></i>
+                        <h3 class="text-xl font-semibold text-gray-800">Market Updates</h3>
+                    </div>
+                    <p class="text-gray-600 mb-4">Stay updated with the latest market trends and analysis for Bangladeshi stocks.</p>
+                    <a href="/news/market-updates/" class="text-indigo-600 font-semibold hover:underline">Read More <i class="fas fa-arrow-right ml-2"></i></a>
+                </div>
+                <div class="bg-gradient-to-br from-purple-50 to-pink-50 rounded-xl p-6 shadow-lg">
+                    <div class="flex items-center mb-4">
+                        <i class="fas fa-bullhorn text-3xl text-purple-600 mr-3"></i>
+                        <h3 class="text-xl font-semibold text-gray-800">Company News</h3>
+                    </div>
+                    <p class="text-gray-600 mb-4">Latest announcements and news from major Bangladeshi companies.</p>
+                    <a href="/news/company-news/" class="text-purple-600 font-semibold hover:underline">Read More <i class="fas fa-arrow-right ml-2"></i></a>
+                </div>
+                <div class="bg-gradient-to-br from-green-50 to-emerald-50 rounded-xl p-6 shadow-lg">
+                    <div class="flex items-center mb-4">
+                        <i class="fas fa-trending-up text-3xl text-green-600 mr-3"></i>
+                        <h3 class="text-xl font-semibold text-gray-800">Investment Tips</h3>
+                    </div>
+                    <p class="text-gray-600 mb-4">Expert insights and tips for smart investing in the Bangladeshi stock market.</p>
+                    <a href="/news/investment-tips/" class="text-green-600 font-semibold hover:underline">Read More <i class="fas fa-arrow-right ml-2"></i></a>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Trade Platform Section -->
+    <section id="trade-platform" class="bg-gradient-to-br from-indigo-50 to-purple-50 py-16">
+        <div class="container mx-auto px-4">
+            <h2 class="text-4xl font-bold text-center text-gray-800 mb-12">
+                <i class="fas fa-exchange-alt text-indigo-600 mr-3"></i>Trade Platform
+            </h2>
+            <div class="max-w-4xl mx-auto bg-white rounded-2xl shadow-xl p-8">
+                <div class="text-center mb-8">
+                    <i class="fas fa-chart-candlestick text-6xl text-indigo-600 mb-4"></i>
+                    <h3 class="text-2xl font-semibold text-gray-800 mb-4">Advanced Trading Platform</h3>
+                    <p class="text-gray-600 text-lg">Access real-time trading tools and execute trades with confidence</p>
+                </div>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div class="border-2 border-indigo-200 rounded-lg p-6">
+                        <i class="fas fa-clock text-2xl text-indigo-600 mb-3"></i>
+                        <h4 class="font-semibold text-gray-800 mb-2">Real-Time Data</h4>
+                        <p class="text-gray-600">Get live market data and instant updates</p>
+                    </div>
+                    <div class="border-2 border-purple-200 rounded-lg p-6">
+                        <i class="fas fa-shield-alt text-2xl text-purple-600 mb-3"></i>
+                        <h4 class="font-semibold text-gray-800 mb-2">Secure Trading</h4>
+                        <p class="text-gray-600">Bank-level security for all your transactions</p>
+                    </div>
+                    <div class="border-2 border-blue-200 rounded-lg p-6">
+                        <i class="fas fa-mobile-alt text-2xl text-blue-600 mb-3"></i>
+                        <h4 class="font-semibold text-gray-800 mb-2">Mobile Access</h4>
+                        <p class="text-gray-600">Trade on the go with our mobile platform</p>
+                    </div>
+                    <div class="border-2 border-green-200 rounded-lg p-6">
+                        <i class="fas fa-headset text-2xl text-green-600 mb-3"></i>
+                        <h4 class="font-semibold text-gray-800 mb-2">24/7 Support</h4>
+                        <p class="text-gray-600">Round-the-clock customer support</p>
+                    </div>
+                </div>
+                <div class="text-center mt-8">
+                    {% if user.is_authenticated %}
+                    <a href="/trading/" class="inline-block bg-gradient-to-r from-indigo-600 to-purple-600 text-white px-8 py-3 rounded-lg font-semibold text-lg hover:from-indigo-700 hover:to-purple-700 transition-all transform hover:scale-105 shadow-lg">
+                        <i class="fas fa-rocket mr-2"></i>Start Trading
+                    </a>
+                    {% else %}
+                    <button onclick="showLoginRequired()" class="inline-block bg-gradient-to-r from-indigo-600 to-purple-600 text-white px-8 py-3 rounded-lg font-semibold text-lg hover:from-indigo-700 hover:to-purple-700 transition-all transform hover:scale-105 shadow-lg">
+                        <i class="fas fa-rocket mr-2"></i>Start Trading
+                    </button>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Contact Section -->
+    <section id="contact" class="bg-white py-16">
+        <div class="container mx-auto px-4">
+            <h2 class="text-4xl font-bold text-center text-gray-800 mb-12">
+                <i class="fas fa-envelope text-indigo-600 mr-3"></i>Contact Us
+            </h2>
+            <div class="max-w-2xl mx-auto">
+                <div class="bg-gradient-to-br from-indigo-50 to-purple-50 rounded-2xl shadow-xl p-8">
+                    <form id="contactForm" class="space-y-6">
+                        <div id="contactMessage" class="hidden p-4 rounded-lg mb-4"></div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Name</label>
+                            <input type="text" id="contactName" name="name" required class="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:border-indigo-500 focus:outline-none" placeholder="Your Name">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Email</label>
+                            <input type="email" id="contactEmail" name="email" required class="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:border-indigo-500 focus:outline-none" placeholder="your.email@example.com">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Message</label>
+                            <textarea rows="4" id="contactMessageText" name="message" required class="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:border-indigo-500 focus:outline-none" placeholder="Your message..."></textarea>
+                        </div>
+                        <button type="submit" id="contactSubmitBtn" class="w-full bg-gradient-to-r from-indigo-600 to-purple-600 text-white py-3 rounded-lg font-semibold text-lg hover:from-indigo-700 hover:to-purple-700 transition-all transform hover:scale-105 shadow-lg disabled:opacity-50 disabled:cursor-not-allowed">
+                            <i class="fas fa-paper-plane mr-2"></i><span id="submitBtnText">Send Message</span>
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="bg-gray-800 text-white py-12">
+        <div class="container mx-auto px-4">
+            <div class="grid grid-cols-1 md:grid-cols-4 gap-8 mb-8">
+                <!-- About -->
+                <div>
+                    <h3 class="text-xl font-bold mb-4 flex items-center">
+                        <i class="fas fa-chart-line text-indigo-400 mr-2"></i>StockPredictor
+                    </h3>
+                    <p class="text-gray-400 mb-4">Your trusted partner for Bangladeshi stock market predictions and analysis.</p>
+                    <div class="flex space-x-4">
+                        <a href="https://www.facebook.com/shuvochakma.roni" class="text-gray-400 hover:text-indigo-400 transition-colors"><i class="fab fa-facebook text-2xl"></i></a>
+                        <a href="https://github.com/Jummoshuvo" class="text-gray-400 hover:text-indigo-400 transition-colors"><i class="fab fa-github text-2xl"></i></a>
+                        <a href="https://www.linkedin.com/in/shuvochakma-roni-409820299/" class="text-gray-400 hover:text-indigo-400 transition-colors"><i class="fab fa-linkedin text-2xl"></i></a>
+                        <a href="https://www.instagram.com/shuvo.careless/" class="text-gray-400 hover:text-indigo-400 transition-colors"><i class="fab fa-instagram text-2xl"></i></a>
+                    </div>
+                </div>
+                <!-- Quick Links -->
+                <div>
+                    <h4 class="text-lg font-semibold mb-4">Quick Links</h4>
+                    <ul class="space-y-2 text-gray-400">
+                        <li><a href="#home" class="hover:text-white transition-colors">Home</a></li>
+                        <li><a href="#stock-news" class="hover:text-white transition-colors">Stock News</a></li>
+                        <li><a href="#trade-platform" class="hover:text-white transition-colors">Trade Platform</a></li>
+                        <li><a href="#contact" class="hover:text-white transition-colors">Contact</a></li>
+                    </ul>
+                </div>
+                <!-- Services -->
+                <div>
+                    <h4 class="text-lg font-semibold mb-4">Services</h4>
+                    <ul class="space-y-2 text-gray-400">
+                        <li><a href="#" class="hover:text-white transition-colors">Stock Predictions</a></li>
+                        <li><a href="#" class="hover:text-white transition-colors">Market Analysis</a></li>
+                        <li><a href="#" class="hover:text-white transition-colors">Trading Tools</a></li>
+                        <li><a href="#" class="hover:text-white transition-colors">Portfolio Management</a></li>
+                    </ul>
+                </div>
+                <!-- Contact Info -->
+                <div>
+                    <h4 class="text-lg font-semibold mb-4">Contact Info</h4>
+                    <ul class="space-y-2 text-gray-400">
+                        <li><i class="fas fa-envelope mr-2"></i>ronishuvochakma@gmail.com</li>
+                        <li><i class="fas fa-phone mr-2"></i>+880 1824658480</li>
+                        <li><i class="fas fa-map-marker-alt mr-2"></i>Dhaka, Bangladesh</li>
+                    </ul>
+                </div>
+            </div>
+            <div class="border-t border-gray-700 pt-8 text-center text-gray-400">
+                <p><i class="fas fa-info-circle mr-2"></i>Predictions are for educational purposes only. Not financial advice.</p>
+                <p class="mt-2">&copy; 2025 StockPredictor. All rights reserved.</p>
+            </div>
+        </div>
+    </footer>
+
+
+    {% load static %}
+    <script src="{% static 'script.js' %}"></script>
+    <script>
+        // Mobile menu toggle
+        document.getElementById('mobileMenuBtn').addEventListener('click', function() {
+            const menu = document.getElementById('mobileMenu');
+            menu.classList.toggle('hidden');
+        });
+
+        // Login functionality moved to dedicated pages (/login/ and /signup/)
+
+        // Smooth scrolling for anchor links
+        document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+            anchor.addEventListener('click', function (e) {
+                e.preventDefault();
+                const target = document.querySelector(this.getAttribute('href'));
+                if (target) {
+                    target.scrollIntoView({
+                        behavior: 'smooth',
+                        block: 'start'
+                    });
+                }
+            });
+        });
+
+        // Contact Form Submission
+        document.getElementById('contactForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            const form = this;
+            const submitBtn = document.getElementById('contactSubmitBtn');
+            const submitBtnText = document.getElementById('submitBtnText');
+            const messageDiv = document.getElementById('contactMessage');
+            const name = document.getElementById('contactName').value.trim();
+            const email = document.getElementById('contactEmail').value.trim();
+            const message = document.getElementById('contactMessageText').value.trim();
+            
+            // Disable submit button
+            submitBtn.disabled = true;
+            submitBtnText.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Sending...';
+            
+            try {
+                const response = await fetch('/api/contact/', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        name: name,
+                        email: email,
+                        message: message
+                    })
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    // Show success message
+                    messageDiv.className = 'p-4 rounded-lg mb-4 bg-green-100 border-2 border-green-500 text-green-700';
+                    messageDiv.innerHTML = `<i class="fas fa-check-circle mr-2"></i>${data.message}`;
+                    messageDiv.classList.remove('hidden');
+                    
+                    // Reset form
+                    form.reset();
+                    
+                    // Scroll to message
+                    messageDiv.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+                } else {
+                    // Show error message
+                    messageDiv.className = 'p-4 rounded-lg mb-4 bg-red-100 border-2 border-red-500 text-red-700';
+                    messageDiv.innerHTML = `<i class="fas fa-exclamation-circle mr-2"></i>${data.error || 'Failed to send message. Please try again.'}`;
+                    messageDiv.classList.remove('hidden');
+                }
+            } catch (error) {
+                // Show error message
+                messageDiv.className = 'p-4 rounded-lg mb-4 bg-red-100 border-2 border-red-500 text-red-700';
+                messageDiv.innerHTML = `<i class="fas fa-exclamation-circle mr-2"></i>An error occurred. Please try again later.`;
+                messageDiv.classList.remove('hidden');
+                console.error('Contact form error:', error);
+            } finally {
+                // Re-enable submit button
+                submitBtn.disabled = false;
+                submitBtnText.innerHTML = '<i class="fas fa-paper-plane mr-2"></i>Send Message';
+            }
+        });
+
+        // Show login required message
+        function showLoginRequired() {
+            const message = 'Please sign up or login first to access the trading platform.';
+            const choice = confirm(message + '\n\nClick OK to go to Sign Up page, or Cancel to go to Login page.');
+            if (choice) {
+                window.location.href = '/signup/?next=/trading/';
+            } else {
+                window.location.href = '/login/?next=/trading/';
+            }
+        }
+
+        // Fallback if Django static files don't load
+        if (typeof Chart === 'undefined') {
+            console.error('Chart.js not loaded');
+        }
+    </script>
+</body>
+</html>

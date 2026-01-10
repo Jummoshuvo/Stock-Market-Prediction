@@ -1,0 +1,232 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Trading Platform - Bangladeshi Stock Market</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body class="bg-gradient-to-br from-gray-50 to-blue-50 min-h-screen">
+    <!-- Navbar -->
+    <nav class="bg-white shadow-lg sticky top-0 z-50">
+        <div class="container mx-auto px-4">
+            <div class="flex justify-between items-center py-4">
+                <div class="flex items-center space-x-2">
+                    <i class="fas fa-chart-line text-indigo-600 text-2xl"></i>
+                    <span class="text-xl font-bold text-gray-800">StockPredictor</span>
+                    <span class="text-sm text-gray-500 ml-2">| Trading Platform</span>
+                </div>
+                <div class="flex items-center space-x-4">
+                    <a href="/" class="text-gray-700 hover:text-indigo-600 transition-colors">
+                        <i class="fas fa-home mr-2"></i>Home
+                    </a>
+                    {% if user.is_authenticated %}
+                    <span class="text-gray-700">
+                        <i class="fas fa-user mr-2"></i>{{ user.username }}
+                    </span>
+                    {% endif %}
+                    <div class="flex items-center space-x-2 bg-green-50 px-4 py-2 rounded-lg">
+                        <i class="fas fa-wallet text-green-600"></i>
+                        <span class="font-semibold text-gray-800">Balance: <span id="userBalance">Loading...</span></span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container mx-auto px-4 py-8">
+        <!-- Header -->
+        <div class="text-center mb-8">
+            <h1 class="text-4xl font-bold text-gray-800 mb-2">
+                <i class="fas fa-exchange-alt text-indigo-600"></i> Trading Platform
+            </h1>
+            <p class="text-gray-600">Trade Bangladeshi stocks in real-time</p>
+        </div>
+
+        <div class="grid grid-cols-1 lg:grid-cols-4 gap-6">
+            <!-- Left Sidebar - Stock Selection & Order Form -->
+            <div class="lg:col-span-1 space-y-6">
+                <!-- Stock Selection -->
+                <div class="bg-white rounded-xl shadow-lg p-6">
+                    <h2 class="text-xl font-semibold text-gray-800 mb-4">
+                        <i class="fas fa-search text-indigo-600"></i> Select Stock
+                    </h2>
+                    <div class="mb-4">
+                        <input 
+                            type="text" 
+                            id="stockSearch" 
+                            placeholder="Search stock symbol..."
+                            class="w-full px-4 py-2 border-2 border-gray-300 rounded-lg focus:border-indigo-500 focus:outline-none uppercase"
+                        >
+                    </div>
+                    <div class="max-h-64 overflow-y-auto">
+                        <div id="stockList" class="space-y-2">
+                            <!-- Stock list will be populated by JavaScript -->
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Order Form -->
+                <div class="bg-white rounded-xl shadow-lg p-6">
+                    <h2 class="text-xl font-semibold text-gray-800 mb-4">
+                        <i class="fas fa-shopping-cart text-indigo-600"></i> Place Order
+                    </h2>
+                    
+                    <!-- Selected Stock Info -->
+                    <div id="selectedStockInfo" class="hidden mb-4 p-4 bg-indigo-50 rounded-lg border-2 border-indigo-200">
+                        <div class="flex justify-between items-center mb-2">
+                            <span class="font-semibold text-gray-800" id="selectedSymbol">-</span>
+                            <span class="text-2xl font-bold text-indigo-600" id="selectedPrice">৳0.00</span>
+                        </div>
+                        <div class="flex justify-between text-sm text-gray-600">
+                            <span>Change: <span id="selectedChange" class="font-semibold">0%</span></span>
+                            <span>Volume: <span id="selectedVolume" class="font-semibold">0</span></span>
+                        </div>
+                    </div>
+
+                    <!-- Order Type -->
+                    <div class="mb-4">
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Order Type</label>
+                        <div class="grid grid-cols-2 gap-2">
+                            <button id="buyBtn" class="px-4 py-3 bg-green-500 text-white rounded-lg font-semibold hover:bg-green-600 transition-colors border-2 border-green-500">
+                                <i class="fas fa-arrow-up mr-2"></i>Buy
+                            </button>
+                            <button id="sellBtn" class="px-4 py-3 bg-red-500 text-white rounded-lg font-semibold hover:bg-red-600 transition-colors border-2 border-transparent">
+                                <i class="fas fa-arrow-down mr-2"></i>Sell
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Quantity -->
+                    <div class="mb-4">
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Quantity</label>
+                        <input 
+                            type="number" 
+                            id="orderQuantity" 
+                            min="1"
+                            placeholder="Enter quantity"
+                            class="w-full px-4 py-2 border-2 border-gray-300 rounded-lg focus:border-indigo-500 focus:outline-none"
+                        >
+                    </div>
+
+                    <!-- Order Price -->
+                    <div class="mb-4">
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Price per Share</label>
+                        <input 
+                            type="number" 
+                            id="orderPrice" 
+                            step="0.01"
+                            placeholder="Enter price"
+                            class="w-full px-4 py-2 border-2 border-gray-300 rounded-lg focus:border-indigo-500 focus:outline-none"
+                        >
+                        <button id="useMarketPrice" class="mt-2 text-sm text-indigo-600 hover:underline">
+                            Use Market Price
+                        </button>
+                    </div>
+
+                    <!-- Total Amount -->
+                    <div class="mb-4 p-3 bg-gray-50 rounded-lg">
+                        <div class="flex justify-between items-center">
+                            <span class="text-gray-600">Total Amount:</span>
+                            <span id="totalAmount" class="text-xl font-bold text-gray-800">৳0.00</span>
+                        </div>
+                    </div>
+
+                    <!-- Place Order Button -->
+                    <button 
+                        id="placeOrderBtn" 
+                        class="w-full bg-gradient-to-r from-indigo-600 to-purple-600 text-white py-3 rounded-lg font-semibold hover:from-indigo-700 hover:to-purple-700 transition-all transform hover:scale-105 shadow-lg disabled:opacity-50 disabled:cursor-not-allowed"
+                        disabled
+                    >
+                        <i class="fas fa-paper-plane mr-2"></i>Place Order
+                    </button>
+                </div>
+            </div>
+
+            <!-- Main Content Area -->
+            <div class="lg:col-span-3 space-y-6">
+                <!-- Market Overview -->
+                <div class="bg-white rounded-xl shadow-lg p-6">
+                    <h2 class="text-xl font-semibold text-gray-800 mb-4">
+                        <i class="fas fa-chart-line text-indigo-600"></i> Market Overview
+                    </h2>
+                    <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+                        <div class="bg-blue-50 rounded-lg p-4 border-2 border-blue-200">
+                            <p class="text-sm text-gray-600 mb-1">DSEX Index</p>
+                            <p class="text-2xl font-bold text-blue-700" id="dsexIndex">6,234.56</p>
+                            <p class="text-sm text-green-600">+1.23%</p>
+                        </div>
+                        <div class="bg-green-50 rounded-lg p-4 border-2 border-green-200">
+                            <p class="text-sm text-gray-600 mb-1">Total Volume</p>
+                            <p class="text-2xl font-bold text-green-700" id="totalVolume">125.4M</p>
+                            <p class="text-sm text-gray-600">Shares</p>
+                        </div>
+                        <div class="bg-purple-50 rounded-lg p-4 border-2 border-purple-200">
+                            <p class="text-sm text-gray-600 mb-1">Advancers</p>
+                            <p class="text-2xl font-bold text-purple-700" id="advancers">145</p>
+                            <p class="text-sm text-gray-600">Stocks</p>
+                        </div>
+                        <div class="bg-red-50 rounded-lg p-4 border-2 border-red-200">
+                            <p class="text-sm text-gray-600 mb-1">Decliners</p>
+                            <p class="text-2xl font-bold text-red-700" id="decliners">89</p>
+                            <p class="text-sm text-gray-600">Stocks</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Price Chart -->
+                <div class="bg-white rounded-xl shadow-lg p-6">
+                    <h2 class="text-xl font-semibold text-gray-800 mb-4">
+                        <i class="fas fa-chart-area text-indigo-600"></i> Price Chart
+                        <span id="chartSymbol" class="text-gray-500 ml-2">- Select a stock</span>
+                    </h2>
+                    <canvas id="priceChart" height="100"></canvas>
+                </div>
+
+                <!-- Trading History & Portfolio -->
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <!-- Portfolio -->
+                    <div class="bg-white rounded-xl shadow-lg p-6">
+                        <h2 class="text-xl font-semibold text-gray-800 mb-4">
+                            <i class="fas fa-briefcase text-indigo-600"></i> Portfolio
+                        </h2>
+                        <div id="portfolioList" class="space-y-3">
+                            <div class="text-center text-gray-500 py-8">
+                                <i class="fas fa-inbox text-4xl mb-2"></i>
+                                <p>No holdings yet</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Order History -->
+                    <div class="bg-white rounded-xl shadow-lg p-6">
+                        <h2 class="text-xl font-semibold text-gray-800 mb-4">
+                            <i class="fas fa-history text-indigo-600"></i> Order History
+                        </h2>
+                        <div id="orderHistory" class="space-y-2 max-h-64 overflow-y-auto">
+                            <div class="text-center text-gray-500 py-8">
+                                <i class="fas fa-clock text-4xl mb-2"></i>
+                                <p>No orders yet</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Success/Error Toast -->
+    <div id="toast" class="hidden fixed top-20 right-4 bg-green-500 text-white px-6 py-4 rounded-lg shadow-lg z-50">
+        <div class="flex items-center">
+            <i class="fas fa-check-circle mr-3"></i>
+            <span id="toastMessage">Order placed successfully!</span>
+        </div>
+    </div>
+
+    {% load static %}
+    <script src="{% static 'trading.js' %}"></script>
+</body>
+</html>
+
