@@ -20,7 +20,7 @@ mplfinance==0.12.10b0
 numpy==2.4.0
 openpyxl==3.1.5
 packaging==25.0
-pandas==2.2.2
+pandas==2.1.4
 pillow==12.1.0
 psycopg-binary==3.3.2
 psycopg2-binary==2.9.11
