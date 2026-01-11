@@ -5,6 +5,7 @@ Django settings for stockpredictor project.
 from pathlib import Path
 import os
 from dotenv import load_dotenv
+import dj_database_url
 
 # Load environment variables from .env file
 load_dotenv()
@@ -92,17 +93,23 @@ WSGI_APPLICATION = 'stockpredictor.wsgi.application'
 #     }
 # }
 ## database settings for postgresql
+# DATABASES = {
+#     'default': {
+#         'ENGINE': 'django.db.backends.postgresql',
+#         'NAME': 'StockMarket',
+#         'USER': 'postgres',
+#         'PASSWORD': 'Shuvo123+',
+#         'HOST': 'localhost',
+#         'PORT': '5432',
+#     }
+# }
 DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.postgresql',
-        'NAME': 'StockMarket',
-        'USER': 'postgres',
-        'PASSWORD': 'Shuvo123+',
-        'HOST': 'localhost',
-        'PORT': '5432',
-    }
+    'default': dj_database_url.config(
+        # Replace this value with your local database's connection string.
+        default='postgresql://stockmarket_4s6x_user:aRhq6FhDEuHpzKHaQ3HEKRPLirWDPxHy@dpg-d5hut2idbo4c73e94odg-a.virginia-postgres.render.com/stockmarket_4s6x',
+        conn_max_age=600
+    )
 }
-
 
 
 # Password validation
