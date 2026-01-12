@@ -38,16 +38,21 @@ def get_stock_data_bdshare(symbol):
     try:
         if not BD_SHARE_AVAILABLE:
             return None
-        
+
         # Get today's data
         today = datetime.now()
         end_date = today.strftime('%Y-%m-%d')
         start_date = (today - timedelta(days=60)).strftime('%Y-%m-%d')
-        
+
         # Fetch historical data - bdshare API: get_hist_data(start, end, code)
         df = bd.get_hist_data(start=start_date, end=end_date, code=symbol)
-        
+
         if df is not None and not df.empty:
+            # Convert price columns to numeric to avoid type errors
+            price_columns = ['open', 'high', 'low', 'close', 'volume']
+            for col in price_columns:
+                if col in df.columns:
+                    df[col] = pd.to_numeric(df[col], errors='coerce')
             return df
         return None
     except Exception as e:
@@ -61,12 +66,17 @@ def get_stock_data_stocksurfer(symbol):
         if not STOCK_SURFER_AVAILABLE:
             return None
 
-        # Use PriceData class from stocksurferbd
-        price_data = PriceData()
+        # Use StockSurferBD class from stocksurferbd
+        stock_data = StockSurferBD()
         # Get historical data (last 60 days)
-        data = price_data.get_hist_data(symbol, days=60)
+        data = stock_data.get_hist_data(symbol, days=60)
 
         if data is not None and not data.empty:
+            # Convert price columns to numeric to avoid type errors
+            price_columns = ['open', 'high', 'low', 'close', 'volume']
+            for col in price_columns:
+                if col in data.columns:
+                    data[col] = pd.to_numeric(data[col], errors='coerce')
             return data
         return None
     except Exception as e:
@@ -104,16 +114,21 @@ def predict_price_simple_moving_average(df, days_ahead=30):
     """Simple prediction using moving averages"""
     if df is None or df.empty or len(df) < 10:
         return None
-    
-    # Use closing price
+
+    # Use closing price and ensure it's numeric
     if 'close' in df.columns:
-        prices = df['close']
+        prices = pd.to_numeric(df['close'], errors='coerce')
     elif 'Close' in df.columns:
-        prices = df['Close']
+        prices = pd.to_numeric(df['Close'], errors='coerce')
     elif 'price' in df.columns:
-        prices = df['price']
+        prices = pd.to_numeric(df['price'], errors='coerce')
     else:
-        prices = df.iloc[:, -1]  # Use last column as price
+        prices = pd.to_numeric(df.iloc[:, -1], errors='coerce')  # Use last column as price
+
+    # Drop any NaN values that might have been introduced
+    prices = prices.dropna()
+    if len(prices) < 10:
+        return None
     
     # Calculate moving averages
     sma_5 = calculate_sma(prices, 5)
